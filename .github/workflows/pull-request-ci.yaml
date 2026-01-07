@@ -15,21 +15,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Extract Issue Number
-        id: extract_issue
-        shell: bash
-        run: |
-          BRANCH_NAME="${{ github.head_ref }}"
-          echo "Current branch: $BRANCH_NAME"
-          if [[ "$BRANCH_NAME" =~ feature/([0-9]+)- ]]; then
-            ISSUE_NUM="${BASH_REMATCH[1]}"
-            echo "issue_num=$ISSUE_NUM" >> $GITHUB_OUTPUT
-            echo "Found issue number: $ISSUE_NUM"
-          else
-            echo "Error: Branch name '$BRANCH_NAME' does not match pattern 'feature/{issue-number}-*'"
-            exit 1
-          fi
-
       - name: Delete existing package version
         uses: actions/delete-package-versions@v5
         with: 
@@ -37,7 +22,7 @@ jobs:
           package-type: 'container'
           min-versions-to-keep: 0
           delete-only-untagged-versions: 'false'
-          ignore-versions: '^(?!pr-${{ steps.extract_issue.outputs.issue_num }}$).*'
+          ignore-versions: '^(?!pr-${{ github.event.number }}$).*'
         continue-on-error: true # Don't fail if package doesn't exist yet
 
       - name: Set up Docker Buildx
@@ -55,6 +40,6 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository_owner }}/service-foundry-web:pr-${{ steps.extract_issue.outputs.issue_num }}
+          tags: ghcr.io/${{ github.repository_owner }}/service-foundry-web:pr-${{ github.event.number }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
