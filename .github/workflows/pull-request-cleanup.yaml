@@ -1,0 +1,22 @@
+name: Pull Request Cleanup
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  delete-image:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+    steps:
+      - name: Delete image from Container Registry
+        uses: actions/delete-package-versions@v5
+        with: 
+          package-name: 'service-foundry-web'
+          package-type: 'container'
+          # Delete the specific version corresponding to this PR
+          # The regex matches "pr-<PR_NUMBER>" exactly
+          ignore-versions: '^(?!pr-${{ github.event.number }}$).*'
+          delete-only-untagged-versions: 'false'
+          min-versions-to-keep: 0
